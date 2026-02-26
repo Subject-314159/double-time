@@ -1,30 +1,14 @@
--- Build array of items to ignore
-local types = {"ammo", "capsule", "gun", "item-with-entity-data", "item-with-label", "item-with-inventory",
-                "blueprint-book", "item-with-tags", "selection-tool", "blueprint", "copy-paste-tool",
-                "deconstruction-item", "spidertron-remote", "upgrade-item", "module", "rail-planner",
-                "space-platform-starter-pack", "tool", "armor", "repair-tool"}
-local ignore_items = {}
-for _, type in pairs(types) do
-    for name, item in pairs(data.raw[type] or {}) do
-        for _, flag in pairs(item.flags or {}) do
-            if flag == "not-stackable" or flag == "only-in-cursor" then
-                table.insert(ignore_items, name)
-            end
-        end
-    end
-end
 ----------------------------------------------------------------------------------------------------
 -- PRODUCTION (other than productivity)
 ----------------------------------------------------------------------------------------------------
 log("===== PRODUCTION =====")
-log("Ignoring items: " .. serpent.line(ignore_items))
 local production = {{
     prototypes = {"recipe"},
     properties = {
         ["results"] = {
             ["_array"] = {
                 ["_filter_field"] = "name",
-                ["_ignore_values"] = ignore_items,
+                ["_ignore_values"] = not_stackable_items,
                 ["_base"] = {"amount", "amount_min", "amount_max"}
             }
         }
@@ -38,7 +22,7 @@ local production = {{
         ["results"] = {
             ["_array"] = {
                 ["_filter_field"] = "name",
-                ["_ignore_values"] = ignore_items,
+                ["_ignore_values"] = not_stackable_items,
                 ["_base"] = {"probability"}
             }
         }
@@ -53,7 +37,7 @@ local production = {{
         ["results"] = {
             ["_array"] = {
                 ["_filter_field"] = "name",
-                ["_ignore_values"] = ignore_items,
+                ["_ignore_values"] = not_stackable_items,
                 ["_base"] = {"percent_spoiled"}
             }
         }

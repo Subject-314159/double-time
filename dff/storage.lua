@@ -1,4 +1,3 @@
-
 ----------------------------------------------------------------------------------------------------
 -- STORAGE
 ----------------------------------------------------------------------------------------------------
@@ -26,16 +25,32 @@ local storage = {{
         ["energy_source"] = {["_base"] = "fuel_inventory_size", "burnt_inventory_size"}
     },
     data = {
-        max_value = 15
+        max_value = MAX_UINT16
     }
 }, {
-    prototypes = {"character"}
     properties = {
         ["_base"] = {"trash_inventory_size", "logistic_trash_inventory_size"}
     },
     data = {
         ignore = not settings.startup["dt-storage-trash"].value,
-        max_value = 15
+        max_value = MAX_UINT16
+    }
+}, {
+    properties = {
+        ["_base"] = {"capacity"}
+    },
+    data = {
+        max_value = MAX_INT32 -- Double
+    }
+}, {
+    prototypes = {"storage-tank"}
+    properties = {
+        ["fluid_box"] = {
+            ["_base"] = {"volume"}
+        }
+    },
+    data = {
+        max_value = MAX_INT32 -- Double
     }
 }, {
     prototypes = {"technology"},
@@ -51,24 +66,31 @@ local storage = {{
     data = {
         max_value = MAX_INT32 -- Double
     }
+}, {
+    prototypes = {"technology"},
+    properties = {
+        ["effects"] = {
+            ["_array"] = {
+                ["_filter_field"] = "type",
+                ["_filter_values"] = {"character-logistic-trash-slots"},
+                ["_base"] = {"modifier"}
+            }
+        }
+    },
+    data = {
+        ignore = not settings.startup["dt-storage-trash"].value,
+        max_value = MAX_INT32 -- Double
+    }
 }}
-multiply_loop(velocity, settings.startup["dt-storage-multiplier"].value)
+multiply_loop(storage, settings.startup["dt-storage-multiplier"].value)
 
--- Technology
--- inserter-stack-size-bonus
--- bulk-inserter-capacity-bonus
--- character-logistic-trash-slots
--- worker-robot-storage
--- character-inventory-slots-bonus
--- cargo-landing-pad-count
--- belt-stack-size-bonus
 
 -- To include
 -- Chests
 -- Storage tanks
 -- TBD: Fluid boxes?
 -- TBD: Crating machine buffers?
--- Inserter hand size
 -- Asteroid collector
 -- Equipment items
 -- Character
+

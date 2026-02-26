@@ -1,12 +1,16 @@
 ----------------------------------------------------------------------------------------------------
 -- DEFINITION
 ----------------------------------------------------------------------------------------------------
+MAX_INT8 = 127
+MAX_UINT8 = 255
 MAX_INT16 = 32767
 MAX_UINT16 = 65535
 MAX_INT32 = 2147483647 -- Float
 MAX_UINT32 = 4294967295
+MAX_DOUBLE = MAX_INT32
 MAX_INT64 = 9223372036854775807 -- Double
 MAX_UINT64 = 18446744073709551615
+MAX_FLOAT = MAX_INT64
 
 local STRUCTURE = {{
     prototypes = {"prototype-1", "..."}, -- Optional, if empty then applying to all prototypes
@@ -36,9 +40,44 @@ local STRUCTURE = {{
 }}
 
 -- Get all prototype types
-local all_prototypes = {}
+all_prototypes = {}
 for type, _ in pairs(data.raw) do
     table.insert(all_prototypes, type)
+end
+all_item_types = {"ammo", "capsule", "gun", "item-with-entity-data", "item-with-label", "item-with-inventory",
+                "blueprint-book", "item-with-tags", "selection-tool", "blueprint", "copy-paste-tool",
+                "deconstruction-item", "spidertron-remote", "upgrade-item", "module", "rail-planner",
+                "space-platform-starter-pack", "tool", "armor", "repair-tool"}
+
+not_stackable_items = {}
+for _, type in pairs(types) do
+    for name, item in pairs(data.raw[type] or {}) do
+        for _, flag in pairs(item.flags or {}) do
+            if flag == "not-stackable" or flag == "only-in-cursor" then
+                table.insert(not_stackable_items, name)
+            end
+        end
+    end
+end
+
+log("Not stackable items: " .. serpent.line(not_stackable_items))
+----------------------------------------------------------------------------------------------------
+-- HELPER FUNCTIONS
+----------------------------------------------------------------------------------------------------
+
+function flatten(arr)
+    local res = {}
+    for k,v in pairs(arr) do 
+        if type(v)=="table" then
+            local flat = flatten(v)
+            for _, f in pairs(flat) do
+                table.insert(res, f)
+            end
+        else
+            table.insert(res,v)
+        end
+    end
+    return res
 end
 
 ----------------------------------------------------------------------------------------------------
