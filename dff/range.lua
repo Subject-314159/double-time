@@ -1,0 +1,23 @@
+
+----------------------------------------------------------------------------------------------------
+-- RANGE
+----------------------------------------------------------------------------------------------------
+-- Technology effects
+-- character-build-distance
+-- character-item-drop-distance
+-- character-reach-distance
+-- character-resource-reach-distance
+-- character-item-pickup-distance
+-- character-loot-pickup-distance
+-- artillery-range
+
+-- To include
+-- Radars
+-- Roboports
+-- Beacons
+-- Power poles
+-- Underground belts
+-- Underground pipes
+-- Asteroid collectors
+-- TBD: Agri towers?
+-- Character

@@ -1,24 +1,32 @@
 ----------------------------------------------------------------------------------------------------
 -- DEFINITION
 ----------------------------------------------------------------------------------------------------
-local MAX_INT16 = 32767
-local MAX_UINT16 = 65535
-local MAX_INT32 = 2147483647 -- Float
-local MAX_UINT32 = 4294967295
-local MAX_INT64 = 9223372036854775807 -- Double
-local MAX_UINT64 = 18446744073709551615
+MAX_INT16 = 32767
+MAX_UINT16 = 65535
+MAX_INT32 = 2147483647 -- Float
+MAX_UINT32 = 4294967295
+MAX_INT64 = 9223372036854775807 -- Double
+MAX_UINT64 = 18446744073709551615
 
 local STRUCTURE = {{
     prototypes = {"prototype-1", "..."}, -- Optional, if empty then applying to all prototypes
     ignore_prototypes = {"prototype-2", "..."}, -- Optional, applied after determining prototypes scope
     properties = {
         ["_base"] = {"property-1", "..."}, -- Top level properties
-        ["nested-lvl-1"] = { -- Recursive tables
+        ["nested-lvl-1"] = { -- Nested tables
             ["_base"] = {"property-2", "..."},
-            ["nested-lvl-2"] = {"property-3", "..."}
+            ["nested-lvl-2"] = {
+                ["_array"] = {
+                    ["_filter_field"] = "field", -- The field to filter on
+                    ["_filter_values"] = {"value-2", "..."}, -- The values for which the multiplier should be applied to, takes priority over ignore_values
+                    ["_ignore_values"] = {"value-2", "..."}, -- The values for which the multiplier should not be applied to
+                    ["_base"] = {"property-3", "..."}
+                }
+            }
         }
     },
     data = {
+        ignore = false, -- Optional, defaults to false
         multiplier = 2, -- Optional, defaults to 2
         divide = false, -- Optional, defaults to false
         round_down = false, -- Optional, defaults to false, applies only when 'divide' is true
@@ -34,7 +42,7 @@ for type, _ in pairs(data.raw) do
 end
 
 ----------------------------------------------------------------------------------------------------
--- GENERIC FUNCTIONS
+-- MULTIPLIER FUNCTIONS
 ----------------------------------------------------------------------------------------------------
 
 -- Generic multiplier function
@@ -94,12 +102,24 @@ multiply_loop_recursive = function(prototype, properties, data)
                 -- Check if the entry matches the filter
                 local filter_field = k["_filter_field"]
                 local filter_values = k["_filter_values"]
-                local pass = false
+                local ignore_values = k["_ignore_values"]
+                local pass
                 if filter_field then
-                    for _, val in pairs(filter_values) do
-                        if entry[filter_field] == val then
-                            pass = true
-                            break
+                    if filter_values then
+                        pass = false
+                        for _, val in pairs(filter_values) do
+                            if entry[filter_field] == val then
+                                pass = true
+                                break
+                            end
+                        end
+                    else
+                        pass = true
+                        for _, val in pairs(ignore_values) do
+                            if entry[filter_field] == val then
+                                pass = false
+                                break
+                            end
                         end
                     end
                 else
@@ -123,8 +143,10 @@ multiply_loop_recursive = function(prototype, properties, data)
 end
 
 -- Main function
-local multiply_loop = function(structure, multiplier)
+multiply_loop = function(structure, multiplier)
     for _, entry in pairs(structure or {}) do
+        -- Skip if ignore
+        if entry.data.ignore then goto continue end
         -- Ensure prototypes
         local prototypes = entry.prototypes or all_prototypes
 
@@ -146,406 +168,39 @@ local multiply_loop = function(structure, multiplier)
                 -- Kick off recursive loop
                 log("Processing " .. proto.name)
                 multiply_loop_recursive(proto, entry.properties, entry.data)
-                -- for _, property in pairs(data.properties) do
-                --     local prop = find_property_recursive(prototype, property)
-                --     multiply(prop, data)
-                -- end
-            end
-        end
-    end
-end
-
--- if settings.startup["dt-double-speed"] then require("data/double-speed") end
--- if settings.startup["dt-double-production"] then require("data/double-production") end
--- if settings.startup["dt-double-productivity"] then require("data/double-productivity") end
--- if settings.startup["dt-double-range"] then require("data/double-range") end
--- if settings.startup["dt-double-storage"] then require("data/double-storage") end
--- if settings.startup["dt-double-damage"] then require("data/double-damage") end
--- if settings.startup["dt-double-health"] then require("data/double-health") end
-
-----------------------------------------------------------------------------------------------------
--- SPEED (other than velocity
-----------------------------------------------------------------------------------------------------
-log("===== SPEED =====")
-local speed = {{
-    properties = {
-        ["_base"] = { -- Capture bot
-        "capture_speed", -- Crafting
-        "crafting_speed", -- Mining/pumping
-        "mining_speed", "pumping_speed", -- Quality bonus
-        "crafting_machine_speed_multiplier", "inserter_speed_multiplier", "lab_research_speed_multiplier",
-
-        -- Researching
-        "researching_speed", -- Space platform
-        "space_platform_dump_cooldown", "space_platform_manual_dump_cooldown"}
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}, {
-    properties = {
-        ["_base"] = { -- Repairing
-        "repair_speed_modifier", "platform_repair_speed_modifier"}
-    },
-    data = {
-        max_value = MAX_INT64 -- Float
-    }
-}, {
-    -- Inserter specific
-    prototypes = {"inserter"},
-    properties = {
-        ["_base"] = {"rotation_speed", "extension_speed"}
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}, {
-    -- Repair tool specific 'speed'
-    prototypes = {"repair-tool"},
-    properties = {
-        ["_base"] = {"speed"}
-    },
-    data = {
-        max_value = MAX_INT64 -- Float
-    }
-}, {
-    prototypes = {"recipe"},
-    properties = {
-        ["_base"] = {"energy_required"}
-    },
-    data = {
-        divide = true,
-        max_value = MAX_INT32
-    }
-
-}, {
-    prototypes = {"module"},
-    properties = {
-        ["effect"] = {
-            ["_base"] = {"speed"}
-        }
-    },
-    data = {
-        max_value = 327.67
-    }
-}, {
-    prototypes = {"technology"},
-    properties = {
-        ["effects"] = {
-            ["_array"] = {
-                ["_filter_field"] = "type",
-                ["_filter_values"] = {"laboratory-speed", "gun-speed", "character-crafting-speed",
-                                      "character-mining-speed"},
-                ["_base"] = {"modifier"}
-            }
-        }
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}}
-multiply_loop(speed, settings.startup["dt-speed-multiplier"].value)
-
-----------------------------------------------------------------------------------------------------
--- VELOCITY
-----------------------------------------------------------------------------------------------------
-log("===== VELOCITY =====")
-local velocity = {{
-    ignore_prototypes = {"sound"},
-    properties = {
-        ["_base"] = { -- Generic
-        "max_speed", -- Ignore 'sound'
-        -- Fuel item
-        "fuel_acceleration_multiplier", "fuel_acceleration_multiplier_quality_bonus", "fuel_top_speed_multiplier",
-        "fuel_top_speed_multiplier_quality_bonus", -- Turret
-        "turret_rotation_speed", -- Car is actually float but who cares
-        -- Projectile/fluid stream
-        "acceleration", "particle_vertical_acceleration", -- Robots
-        "robot_vertical_acceleration", -- Car
-        "initial_movement_speed", "torso_rotation_speed", -- Train
-        "train-pushed_by_player_max_acceleration", -- Spider leg
-        "movement_acceleration", -- Space platform
-        "space_platform_relative_speed_factor", -- Gate
-        "opening_speed"}
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}, {
-    prototypes = {"capture-robot", "combat-robot", "construction-robot", "logistic-robot", "projectile", "turret"},
-    properties = {
-        ["_base"] = { -- Flying robot
-        "speed_multiplier_when_out_of_energy", -- Projectile
-        "turn_speed", -- Turret
-        "rotation_speed", "rotation_speed_secondary", "cannon_parking_speed", "default_speed", -- Asteroid collector
-        "arm_speed_base", "arm_speed_quality_scaling", "unpowered_arm_speed_scale"}
-    },
-    data = {
-        max_value = MAX_INT64 -- Float
-    }
-}, {
-    -- Flying robot specific 'speed'
-    prototypes = {"capture-robot", "combat-robot", "construction-robot", "logistic-robot"},
-    properties = {
-        ["_base"] = {"speed"}
-    },
-    data = {
-        max_value = MAX_INT64 -- Float
-    }
-}, {
-    -- Car specific 'rotation_speed'
-    prototypes = {"car"},
-    properties = {
-        ["_base"] = {"rotation_speed"}
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}, {
-    -- Turret specific 'rotation_speed'
-    prototypes = {"turret"},
-    properties = {
-        ["_base"] = {"rotation_speed"}
-    },
-    data = {
-        max_value = MAX_INT64 -- Float
-    }
-}, {
-    -- Hard code limit to x5 multiplier for character movement and rocket silo
-    prototypes = {"tile", "character", "rocket-silo"},
-    properties = {
-        ["_base"] = { -- Tile
-        "walking_speed_modifier", -- Character
-        "running_speed", -- Rocket silo
-        "rising_speed", "engine_starting_speed", "flying_speed", "flying_acceleration"}
-    },
-    data = {
-        multiplier = math.min(settings.startup["dt-velocity-multiplier"].value, 5),
-        max_value = MAX_INT32 -- Double
-    }
-}, {
-    prototypes = {"technology"},
-    properties = {
-        ["effects"] = {
-            ["_array"] = {
-                ["_filter_field"] = "type",
-                ["_filter_values"] = {"worker-robot-speed", "character-running-speed", "train-braking-force-bonus",
-                                      "worker-robot-battery"},
-                ["_base"] = {"modifier"}
-            }
-        }
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}}
-multiply_loop(velocity, settings.startup["dt-velocity-multiplier"].value)
-
-----------------------------------------------------------------------------------------------------
--- PRODUCTION (other than productivity)
-----------------------------------------------------------------------------------------------------
-log("===== PRODUCTION =====")
--- local production = {{
---     prototypes = {"recipe"},
---     properties = {
---         ["results"] = {
---             ["_array"] = {
---                 ["_base"] = {"amount", "amount_min", "amount_max"}
---             }
---         }
---     },
---     data = {
---         max_value = MAX_INT16
---     }
--- }, {
---     prototypes = {"recipe"},
---     properties = {
---         ["results"] = {
---             ["_array"] = {
---                 ["_base"] = {"probability"}
---             }
---         }
---     },
---     data = {
---         max_value = 1 -- Should be between 0 and 1
---     }
--- }, {
---     prototypes = {"recipe"},
---     properties = {
---         ["results"] = {
---             ["_array"] = {
---                 ["_base"] = {"percent_spoiled"}
---             }
---         }
---     },
---     data = {
---         divide = true,
---         max_value = 1 -- Should be between 0 and 1
---     }
--- }}
--- multiply_loop(production, settings.startup["dt-production-multiplier"].value)
-
-local production = {{
-    properties = {"amount", "amount_min", "amount_max"},
-    data = {
-        multiplier = settings.startup["dt-production-multiplier"].value,
-        max_value = MAX_INT16
-    }
-}, {
-    properties = {"probability"},
-    data = {
-        multiplier = settings.startup["dt-production-multiplier"].value,
-        max_value = 1 -- Should be between 0 and 1
-    }
-}, {
-    properties = {"percent_spoiled"},
-    data = {
-        multiplier = settings.startup["dt-production-multiplier"].value,
-        divide = true,
-        max_value = 1 -- Should be between 0 and 1
-    }
-}}
-for _, recipe in pairs(data.raw["recipe"]) do
-    log("Processing " .. recipe.name)
-    for _, result in pairs(recipe.results or {}) do
-        log(" --> Processing result " .. result.name)
-        -- Check if the item is allowed (i.e. stackable)
-        local allowed = true
-        if result.type == "item" then
-            local types = {"ammo", "capsule", "gun", "item-with-entity-data", "item-with-label", "item-with-inventory",
-                           "blueprint-book", "item-with-tags", "selection-tool", "blueprint", "copy-paste-tool",
-                           "deconstruction-item", "spidertron-remote", "upgrade-item", "module", "rail-planner",
-                           "space-platform-starter-pack", "tool", "armor", "repair-tool"}
-            for _, type in pairs(types) do
-                if data.raw[type] then
-                    local item = data.raw[type][result.name]
-                    if item then
-                        for _, flag in pairs(item.flags or {}) do
-                            if flag == "not-stackable" then
-                                allowed = false
-                            end
-                        end
-                    end
-                end
             end
         end
 
-        -- Apply
-        if allowed then
-            for _, entry in pairs(production) do
-                for _, v in pairs(entry.properties) do
-                    log(" ==> Applying " .. v)
-                    multiply(result, v, entry.data)
-                end
-            end
-        end
+        ::continue::
     end
 end
 
 ----------------------------------------------------------------------------------------------------
--- PRODUCTIVITY
+-- MULTIPLY
 ----------------------------------------------------------------------------------------------------
-log("===== PRODUCTIVITY =====")
-local productivity = {{
-    prototypes = {"recipe"},
-    properties = {
-        ["results"] = {
-            ["_array"] = {
-                ["_base"] = {"ignored_by_productivity"}
-            }
-        }
-    },
-    data = {
-        divide = true,
-        round_down = true,
-        max_value = MAX_UINT16
-    }
-}, {
-    prototypes = {"recipe"},
-    properties = {
-        ["_base"] = {"maximum_productivity"}
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}, {
-    prototypes = {"recipe"},
-    properties = {
-        ["results"] = {
-            ["_array"] = {
-                ["_base"] = {"extra_count_fraction"}
-            }
-        }
-    },
-    data = {
-        max_value = MAX_INT64 -- Float
-    }
-}, {
-    prototypes = {"module", "technology"},
-    properties = {
-        ["effect"] = {
-            ["_base"] = {"productivity"}
-        },
-        ["effects"] = {
-            ["_array"] = {
-                ["_filter_field"] = "type",
-                ["_filter_values"] = {"change-recipe-productivity"},
-                ["_base"] = {"change"}
-            }
-        }
-    },
-    data = {
-        max_value = 327.67
-    }
-}, {
-    prototypes = {"technology"},
-    properties = {
-        ["effects"] = {
-            ["_array"] = {
-                ["_filter_field"] = "type",
-                ["_filter_values"] = {"laboratory-productivity", "mining-drill-productivity-bonus",
-                                      "beacon-distribution"},
-                ["_base"] = {"modifier"}
-            }
-        }
-    },
-    data = {
-        max_value = MAX_INT32 -- Double
-    }
-}}
-multiply_loop(productivity, settings.startup["dt-productivity-multiplier"].value)
+require("dff/production")
+require("dff/productivity")
+require("dff/speed")
+require("dff/velocity")
+require("dff/storage")
+require("dff/stack")
+require("dff/range")
+require("dff/damage")
+require("dff/health")
 
-----------------------------------------------------------------------------------------------------
--- RANGE
-----------------------------------------------------------------------------------------------------
--- Technology
--- character-build-distance
--- character-item-drop-distance
--- character-reach-distance
--- character-resource-reach-distance
--- character-item-pickup-distance
--- character-loot-pickup-distance
--- artillery-range
-----------------------------------------------------------------------------------------------------
--- STORAGE
-----------------------------------------------------------------------------------------------------
--- Technology
--- inserter-stack-size-bonus
--- bulk-inserter-capacity-bonus
--- character-logistic-trash-slots
--- worker-robot-storage
--- character-inventory-slots-bonus
--- cargo-landing-pad-count
--- belt-stack-size-bonus
+dt-production-multiplier=Production multiplier [1 .. 10]
+dt-production-probability= ↳ Multiply recipe probability
+dt-productivity-multiplier=Productivity multiplier [1.0 .. 10.0]
+dt-crafting-speed-multiplier=Crafting speed multiplier [1.0 .. 10.0]
+dt-transportation-speed-multiplier=Transportation speed multiplier [1.0 .. 10.0]
+dt-velocity-multiplier=Velocity multiplier [1.0 .. 10.0]
+dt-storage-multiplier=Storage multiplier [1 .. 10]
+dt-stack-multiplier=Stack multiplier [1 .. 10]
+dt-stack-item= ↳ Multiply item stack size
+dt-stack-hand= ↳ Multiply hand stack size
+dt-stack-belt= ↳ Multiply belt stack bonus
+dt-range-multiplier=Range multiplier [1.0 .. 10.0]
+dt-damage-multiplier=Damage multiplier [1.0 .. 10.0]
+dt-health-multiplier=Health multiplier [1.0 .. 10.0]
+dt-health-resistance= ↳ Multiply resistance
 
-----------------------------------------------------------------------------------------------------
--- DAMAGE
-----------------------------------------------------------------------------------------------------
--- Technology
--- turret-attack
--- ammo-damage
-----------------------------------------------------------------------------------------------------
--- HEALTH
-----------------------------------------------------------------------------------------------------
--- Technology
--- character-health-bonus
