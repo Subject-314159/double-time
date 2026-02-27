@@ -1,21 +1,22 @@
-# Title
+# Double time
+
+The engineer is working over time, but the reward is worth it! This mod multiplies every possible property to increase the factory's outupt.
 
 ---
 
 # Known issues
 
--   None, feel free to open a bug report
+- Space Exploration prohibits certain items to increase stack/storage size, those are ignored by the multiplier
 
 # Roadmap
 
--   Make this mod awesome
+- Implement health and damage multipliers
 
 # Collaborations welcome
 
--   Start a discussion with your ideas
--   Open a pull request on Github
--   Report issues under discussions
+- Start a discussion with your ideas
+- Report issues under discussions
 
 # Acknowledgement
 
--   Me, for being awesome
+- Me, for being awesome

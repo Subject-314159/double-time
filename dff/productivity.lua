@@ -1,8 +1,7 @@
-
 ----------------------------------------------------------------------------------------------------
 -- PRODUCTIVITY
 ----------------------------------------------------------------------------------------------------
-log("===== PRODUCTIVITY =====")
+logif("===== PRODUCTIVITY =====")
 local productivity = {{
     prototypes = {"recipe"},
     properties = {
@@ -43,12 +42,24 @@ local productivity = {{
         ["effect"] = {
             ["_base"] = {"productivity"}
         },
-        ["base_effect"] = {
-            ["_base"] = {"productivity"}
+        ["effect_receiver"] = {
+            ["base_effect"] = {
+                ["_base"] = {"productivity"}
+            }
         }
     },
     data = {
-        max_value = 327.67
+        max_value = 327.669
+    }
+}, { -- Labs
+    prototypes = {"lab"},
+    properties = {
+        ["_base"] = {"science_pack_drain_rate_percent"}
+    },
+    data = {
+        divide = true,
+        round_up = true,
+        max_value = 100
     }
 }, { -- Technology recipe productivity
     prototypes = {"technology"},
@@ -65,7 +76,7 @@ local productivity = {{
         }
     },
     data = {
-        max_value = 327.67
+        max_value = 327.669
     }
 }, { -- Technology (non recipe productivity)
     prototypes = {"technology"},

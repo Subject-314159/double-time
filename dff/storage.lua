@@ -1,12 +1,18 @@
 ----------------------------------------------------------------------------------------------------
 -- STORAGE
 ----------------------------------------------------------------------------------------------------
-log("===== STORAGE =====")
+logif("===== STORAGE =====")
+local ignore_items = {}
+if mods["space-exploration"] then
+    ignore_items = {"se-rocket-launch-pad", "se-rocket-launch-pad-tank"}
+end
 local storage = {{
-    ignore_prototypes = {"blueprint-book"}
+    ignore_prototypes = {"blueprint-book"},
+    ignore_items = ignore_items,
     properties = {
-        ["_base"] = {"inventory_size", "inventory_size_bonus", "inventory_size_multiplier", "inventory_size_quality_increase",
-                        "arm_inventory_size", "arm_inventory_size_quality_increase", "input_inventory_size", "output_inventory_size", "result_inventory_size"}
+        ["_base"] = {"inventory_size", "inventory_size_bonus", "inventory_size_multiplier",
+                     "inventory_size_quality_increase", "arm_inventory_size", "arm_inventory_size_quality_increase",
+                     "input_inventory_size", "output_inventory_size", "result_inventory_size"}
     },
     data = {
         max_value = MAX_UINT16
@@ -21,8 +27,12 @@ local storage = {{
     }
 }, {
     properties = {
-        ["burner"] = {["_base"] = "fuel_inventory_size", "burnt_inventory_size"},
-        ["energy_source"] = {["_base"] = "fuel_inventory_size", "burnt_inventory_size"}
+        ["burner"] = {
+            ["_base"] = {"fuel_inventory_size", "burnt_inventory_size"}
+        },
+        ["energy_source"] = {
+            ["_base"] = {"fuel_inventory_size", "burnt_inventory_size"}
+        }
     },
     data = {
         max_value = MAX_UINT16
@@ -43,7 +53,8 @@ local storage = {{
         max_value = MAX_INT32 -- Double
     }
 }, {
-    prototypes = {"storage-tank"}
+    prototypes = {"storage-tank"},
+    ignore_items = ignore_items,
     properties = {
         ["fluid_box"] = {
             ["_base"] = {"volume"}
@@ -83,7 +94,6 @@ local storage = {{
     }
 }}
 multiply_loop(storage, settings.startup["dt-storage-multiplier"].value)
-
 
 -- To include
 -- Chests

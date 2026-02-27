@@ -1,8 +1,15 @@
-
 ----------------------------------------------------------------------------------------------------
 -- STACK
 ----------------------------------------------------------------------------------------------------
-log("===== STACK =====")
+logif("===== STACK =====")
+local ignore_items = {}
+local max_stack_size = MAX_INT32 -- Double
+if mods["space-exploration"] then
+    ignore_items = {"rocket-fuel", "iron-ore", "iron-plate", "copper-ore", "copper-plate", "stone", "stone-brick",
+                    "low-density-structure", "se-beryllium-ore", "se-beryllium-plate", "se-holmium-ore",
+                    "se-holmium-plate", "se-iridium-ore", "se-iridium-plate"}
+    max_stack_size = 200
+end
 local stack = {{
     prototypes = {"inserter", "loader", "loader-1x1", "utility-constants"},
     properties = {
@@ -11,15 +18,6 @@ local stack = {{
     data = {
         ignore = not settings.startup["dt-stack-hand"].value,
         max_value = MAX_UINT8
-    }
-}, {
-    prototypes = {"inserter"},
-    properties = {
-        ["_base"] = {"hand_size"}
-    },
-    data = {
-        ignore = not settings.startup["dt-stack-hand"].value,
-        max_value = MAX_INT32 -- Double
     }
 }, {
     prototypes = {"construction-robot", "logistic-robot"},
@@ -31,14 +29,13 @@ local stack = {{
         max_value = MAX_INT32
     }
 }, {
-    prototypes = all_item_types,
-    ignore_prototypes = not_stackable_items,
+    ignore_items = flatten({not_stackable_items, ignore_items}),
     properties = {
         ["_base"] = {"stack_size"}
     },
     data = {
-        ignore = ignore = not settings.startup["dt-stack-item"].value,
-        max_value = MAX_INT32 -- Double
+        ignore = not settings.startup["dt-stack-item"].value,
+        max_value = max_stack_size
     }
 }, {
     prototypes = {"technology"},
@@ -46,7 +43,8 @@ local stack = {{
         ["effects"] = {
             ["_array"] = {
                 ["_filter_field"] = "type",
-                ["_filter_values"] = {"inserter-stack-size-bonus", "bulk-inserter-capacity-bonus", "worker-robot-storage"},
+                ["_filter_values"] = {"inserter-stack-size-bonus", "bulk-inserter-capacity-bonus",
+                                      "worker-robot-storage"},
                 ["_base"] = {"modifier"}
             }
         }
@@ -73,13 +71,8 @@ local stack = {{
 }}
 multiply_loop(stack, settings.startup["dt-stack-multiplier"].value)
 
-
--- dt-stack-item= ↳ Multiply item stack size
--- dt-stack-hand= ↳ Multiply hand stack size
--- dt-stack-belt= ↳ Multiply belt stack bonus
-
--- Technology
-
 -- To include
--- Inserter hand size
 -- Worker robot carry size 
+
+-- Do not include:
+-- Inserter hand size

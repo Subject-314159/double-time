@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------------------------------
 -- PRODUCTION (other than productivity)
 ----------------------------------------------------------------------------------------------------
-log("===== PRODUCTION =====")
+logif("===== PRODUCTION =====")
 local production = {{
     prototypes = {"recipe"},
     properties = {
@@ -28,7 +28,7 @@ local production = {{
         }
     },
     data = {
-        ignore = not settings.startup["dt-production-probability"].value
+        ignore = not settings.startup["dt-production-probability"].value,
         max_value = 1 -- Should be between 0 and 1
     }
 }, {
@@ -46,9 +46,57 @@ local production = {{
         divide = true,
         max_value = 1 -- Should be between 0 and 1
     }
+}, {
+    prototypes = {"generator"},
+    properties = {
+        ["_base"] = {"max_power_output"},
+        ["energy_source"] = {
+            ["_base"] = {"buffer_capacity", "input_flow_limit", "output_flow_limit"}
+        }
+    },
+    data = {
+        is_energy = true,
+        max_value = MAX_UINT64
+    }
+}, {
+    properties = {
+        ["_base"] = {"effectivity"},
+        ["energy_source"] = {
+            ["_base"] = {"effectivity"}
+        }
+    },
+    data = {
+        max_value = MAX_DOUBLE
+    }
+}, {
+    prototypes = {"solar-panel"},
+    properties = {
+        ["_base"] = {"production"}
+    },
+    data = {
+        is_energy = true,
+        max_value = MAX_DOUBLE
+    }
+}, {
+    properties = {
+        ["_base"] = {"energy_usage"}
+    },
+    data = {
+        is_energy = true,
+        divide = true,
+        round_up = true,
+        max_value = MAX_DOUBLE
+    }
+}, {
+    properties = {
+        ["_base"] = {"fuel_value"}
+    },
+    data = {
+        is_energy = true,
+        max_value = MAX_DOUBLE
+    }
 }}
 multiply_loop(production, settings.startup["dt-production-multiplier"].value)
-
 
 -- local production = {{
 --     properties = {"amount", "amount_min", "amount_max"},
@@ -71,9 +119,9 @@ multiply_loop(production, settings.startup["dt-production-multiplier"].value)
 --     }
 -- }}
 -- for _, recipe in pairs(data.raw["recipe"]) do
---     log("Processing " .. recipe.name)
+--     logif("Processing " .. recipe.name)
 --     for _, result in pairs(recipe.results or {}) do
---         log(" --> Processing result " .. result.name)
+--         logif(" --> Processing result " .. result.name)
 --         -- Check if the item is allowed (i.e. stackable)
 --         local allowed = true
 --         if result.type == "item" then
@@ -99,7 +147,7 @@ multiply_loop(production, settings.startup["dt-production-multiplier"].value)
 --         if allowed then
 --             for _, entry in pairs(production) do
 --                 for _, v in pairs(entry.properties) do
---                     log(" ==> Applying " .. v)
+--                     logif(" ==> Applying " .. v)
 --                     multiply(result, v, entry.data)
 --                 end
 --             end

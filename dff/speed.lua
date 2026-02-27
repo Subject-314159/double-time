@@ -1,19 +1,13 @@
-
 ----------------------------------------------------------------------------------------------------
 -- SPEED (other than velocity
 ----------------------------------------------------------------------------------------------------
-log("===== SPEED =====")
+logif("===== SPEED =====")
 local speed = {{
     properties = {
-        ["_base"] = { -- Capture bot
-        "capture_speed", -- Crafting
-        "crafting_speed", -- Mining/pumping
-        "mining_speed", "pumping_speed", -- Quality bonus
-        "crafting_machine_speed_multiplier", "inserter_speed_multiplier", "lab_research_speed_multiplier",
-
-        -- Researching
-        "researching_speed", -- Space platform
-        "space_platform_dump_cooldown", "space_platform_manual_dump_cooldown"}
+        ["_base"] = {"capture_speed", "crafting_speed", "mining_speed", "pumping_speed",
+                     "crafting_machine_speed_multiplier", "inserter_speed_multiplier", "lab_research_speed_multiplier",
+                     "researching_speed", "space_platform_dump_cooldown", "space_platform_manual_dump_cooldown",
+                     "fuel_acceleration_multiplier", "fuel_top_speed_multiplier"}
     },
     data = {
         max_value = MAX_INT32 -- Double
@@ -37,7 +31,8 @@ local speed = {{
     }
 }, {
     -- Belt specific 'speed'
-    prototypes = {"lane-splitter", "linked-belt", "loader-1x1", "loader", "splitter", "transport-belt", "underground-belt"},
+    prototypes = {"lane-splitter", "linked-belt", "loader-1x1", "loader", "splitter", "transport-belt",
+                  "underground-belt"},
     properties = {
         ["_base"] = {"speed"}
     },
@@ -59,8 +54,12 @@ local speed = {{
     properties = {
         ["crane"] = {
             ["speed"] = {
-                ["arm"] = {["_base"] = {"turn_rate", "extension_speed"}},
-                ["grappler"] = {["_base"] = {"vertical_turn_rate", "horizontal_turn_rate", "extension_speed"}}
+                ["arm"] = {
+                    ["_base"] = {"turn_rate", "extension_speed"}
+                },
+                ["grappler"] = {
+                    ["_base"] = {"vertical_turn_rate", "horizontal_turn_rate", "extension_speed"}
+                }
             }
         }
     },
@@ -74,12 +73,14 @@ local speed = {{
         ["effect"] = {
             ["_base"] = {"speed"}
         },
-        ["base_effect"] = {
-            ["_base"] = {"speed"}
+        ["effect_receiver"] = {
+            ["base_effect"] = {
+                ["_base"] = {"speed"}
+            }
         }
     },
     data = {
-        max_value = 327.67
+        max_value = 327.669
     }
 }, {
     prototypes = {"recipe"},
@@ -88,6 +89,7 @@ local speed = {{
     },
     data = {
         divide = true,
+        min_value = 0.002,
         max_value = MAX_INT32
     }
 
@@ -120,7 +122,6 @@ multiply_loop(speed, settings.startup["dt-speed-multiplier"].value)
 -- Recipes
 -- Equipment items
 -- Character
-
 
 -- Belts
 -- Inserters
